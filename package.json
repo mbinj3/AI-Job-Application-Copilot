@@ -1,0 +1,35 @@
+{
+  "name": "ai-job-application-copilot",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@10.9.2",
+  "description": "Production-grade AI-powered job application assistant monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run build:shared && concurrently --names api,web -c blue,green \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:web": "npm run build:shared && npm run dev -w @copilot/web",
+    "dev:api": "npm run build:shared && npm run dev -w @copilot/api",
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build -w @copilot/shared",
+    "build:web": "npm run build:shared && npm run build -w @copilot/web",
+    "build:api": "npm run build:shared && npm run build -w @copilot/api",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "type-check": "npm run build:shared && npm run type-check --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "prettier": "^3.5.2",
+    "turbo": "^2.4.4",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
