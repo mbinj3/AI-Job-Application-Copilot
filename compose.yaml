@@ -1,0 +1,6 @@
+services:
+  jobautomationproject:
+    image: jobautomationproject
+    build:
+      context: .
+      dockerfile: ./Dockerfile
