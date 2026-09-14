@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import babelParser from '@babel/eslint-parser';
 
 /** @type {import("eslint").Linter.Config[]} */
 export default [
@@ -14,10 +15,20 @@ export default [
     ],
   },
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['**/*.{js,mjs,cjs,ts,tsx}'],
+    languageOptions: {
+      parser: babelParser,
+      parserOptions: {
+        requireConfigFile: false,
+        babelOptions: {
+          presets: ['@babel/preset-typescript'],
+        },
+      },
+    },
     rules: {
       'no-unused-vars': 'off',
       'no-console': 'off',
+      'no-undef': 'off',
     },
   },
 ];
