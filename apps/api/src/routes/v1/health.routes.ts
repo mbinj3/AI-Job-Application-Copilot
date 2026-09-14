@@ -5,6 +5,7 @@ import { healthQuerySchema } from '../../schemas/health.schema.js';
 
 const router = Router();
 
+// GET /api/v1/health
 router.get('/', validate({ query: healthQuerySchema }), getHealthCheck);
 
 export const healthRoutes = router;

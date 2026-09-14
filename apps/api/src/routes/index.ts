@@ -1,15 +1,4 @@
-import { Router } from 'express';
-import { healthRoutes } from './health.routes.js';
+export { apiRouter } from './api.routes.js';
+export { v1Router } from './v1/index.js';
+export { healthRoutes } from './v1/health.routes.js';
 
-const apiRouter = Router();
-
-// Health check endpoint -> /api/health
-apiRouter.use('/health', healthRoutes);
-
-// Future modular route mounts:
-// apiRouter.use('/auth', authRoutes);
-// apiRouter.use('/resumes', resumeRoutes);
-// apiRouter.use('/jobs', jobRoutes);
-// apiRouter.use('/ai', aiRoutes);
-
-export { apiRouter };

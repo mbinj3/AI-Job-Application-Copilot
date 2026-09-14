@@ -1,9 +1,2 @@
-import { Router } from 'express';
-import { getHealthCheck } from '../controllers/health.controller.js';
+export { healthRoutes } from './v1/health.routes.js';
 
-const router = Router();
-
-// GET /api/health
-router.get('/', getHealthCheck);
-
-export const healthRoutes = router;
