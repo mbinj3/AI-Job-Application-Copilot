@@ -28,3 +28,10 @@ function gracefulShutdown(signal: string) {
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+export { createApp } from './app.js';
+export { env } from './config/env.js';
+export { logger } from './config/logger.js';
+export * from './utils/errors.js';
+export * from './utils/asyncHandler.js';
+export * from './middleware/index.js';

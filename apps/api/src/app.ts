@@ -2,9 +2,7 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { env } from './config/env.js';
-import { requestLogger } from './middlewares/requestLogger.js';
-import { errorHandler } from './middlewares/errorHandler.js';
-import { notFoundHandler } from './middlewares/notFound.js';
+import { requestLogger, notFoundHandler, errorHandler } from './middleware/index.js';
 import { apiRouter } from './routes/index.js';
 
 export function createApp(): Express {
@@ -19,7 +17,7 @@ export function createApp(): Express {
       origin: env.corsOrigin === '*' ? '*' : [env.corsOrigin, 'http://localhost:3000'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-request-id'],
     })
   );
 
@@ -27,16 +25,16 @@ export function createApp(): Express {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-  // Request Logging
+  // Structured HTTP Request Logging (Pino)
   app.use(requestLogger);
 
-  // Mount API Router under prefix (e.g. /api)
+  // Mount API Router under configured prefix (e.g. /api -> /api/v1/*)
   app.use(env.apiPrefix, apiRouter);
 
-  // 404 Handler
+  // 404 Resource Not Found Handler
   app.use(notFoundHandler);
 
-  // Global Error Handler
+  // Centralized Global Error Handler
   app.use(errorHandler);
 
   return app;
