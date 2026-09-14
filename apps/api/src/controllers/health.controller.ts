@@ -1,16 +1,14 @@
 import { Request, Response } from 'express';
-import { HealthCheckResponse, HTTP_STATUS } from '@copilot/shared';
-import { env } from '../config/env.js';
+import { HTTP_STATUS } from '@copilot/shared';
+import { HealthService } from '../services/health.service.js';
 
-export function getHealthCheck(_req: Request, res: Response): void {
-  const responseData: HealthCheckResponse = {
-    status: 'ok',
-    service: 'ai-job-application-copilot-api',
-    version: '0.1.0',
-    timestamp: new Date().toISOString(),
-    uptime: Math.floor(process.uptime()),
-    environment: env.nodeEnv,
-  };
+export function getHealthCheck(req: Request, res: Response): void {
+  const echo = typeof req.query.echo === 'string' ? req.query.echo : undefined;
+  const healthData = HealthService.getHealthStatus(echo);
 
-  res.status(HTTP_STATUS.OK).json(responseData);
+  res.status(HTTP_STATUS.OK).json({
+    success: true,
+    message: 'API is healthy',
+    data: healthData,
+  });
 }
