@@ -1,0 +1,100 @@
+// =============================================================================
+// Prisma Schema — AI Job Application Copilot
+// =============================================================================
+// Database:  Prisma Postgres
+// Generator: Prisma Client JS
+//
+// Workflow:
+//   1. Edit schema.prisma
+//   2. Run: npm run db:migrate --workspace=@copilot/api
+//   3. Run: npm run db:generate --workspace=@copilot/api
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// USER
+// Core identity record. Authentication credentials stored as a hash (never
+// plaintext). Authentication implementation is deferred to a later phase.
+// =============================================================================
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String? // Future: populated during auth implementation phase
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  profile UserProfile?
+  resumes Resume[]
+
+  @@map("users")
+}
+
+// =============================================================================
+// USER PROFILE
+// One-to-one extension of User. Stores professional/biographical information
+// that supports resume matching and job recommendation features.
+// =============================================================================
+model UserProfile {
+  id     String @id @default(cuid())
+  userId String @unique // One profile per user
+
+  // Personal information
+  firstName String?
+  lastName  String?
+  headline  String? // e.g. "Senior Software Engineer"
+  location  String? // e.g. "New York, NY"
+  bio       String? @db.Text
+
+  // Professional links
+  linkedinUrl String?
+  websiteUrl  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+// =============================================================================
+// RESUME
+// A user can have multiple resumes (e.g. different versions for different
+// roles). Stores the original filename, extracted text content, and optional
+// structured/parsed data for AI analysis in later phases.
+// =============================================================================
+model Resume {
+  id     String @id @default(cuid())
+  userId String
+
+  // Identity
+  title            String  // User-assigned label, e.g. "Software Engineer Resume"
+  originalFilename String? // Original uploaded filename, e.g. "john_doe_cv.pdf"
+
+  // Content
+  contentText String? @db.Text // Extracted plain text (for AI/search)
+  parsedData  Json?             // Structured parsed result (future AI output)
+
+  // Status
+  isDefault Boolean @default(false) // Whether this is the user's primary resume
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([userId])
+  @@map("resumes")
+}
