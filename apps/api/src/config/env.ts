@@ -11,6 +11,7 @@ export interface EnvConfig {
   isProduction: boolean;
   isDevelopment: boolean;
   isTest: boolean;
+  databaseUrl: string;
 }
 
 const nodeEnv = (process.env.NODE_ENV as EnvConfig['nodeEnv']) || 'development';
@@ -24,4 +25,5 @@ export const env: EnvConfig = {
   isProduction: nodeEnv === 'production',
   isDevelopment: nodeEnv === 'development',
   isTest: nodeEnv === 'test',
+  databaseUrl: process.env.DATABASE_URL || '',
 };
