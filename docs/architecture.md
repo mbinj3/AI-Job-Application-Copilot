@@ -52,23 +52,40 @@ src/
 
 ## Backend Architecture (`apps/api`)
 
-### Framework: Express.js + TypeScript
+### Framework: Express.js + TypeScript + Prisma
 
 ```
 src/
-├── index.ts                # Server bootstrap, graceful shutdown
+├── server.ts               # Server bootstrap, graceful shutdown (Prisma disconnect)
 ├── app.ts                  # Express factory (middleware, routes)
 ├── config/
-│   └── env.ts              # Typed environment config
+│   ├── env.ts              # Typed environment config (incl. DATABASE_URL)
+│   └── logger.ts           # Pino structured logger
+├── db/
+│   ├── prisma.ts           # Singleton PrismaClient (hot-reload safe)
+│   ├── health.ts           # checkDatabaseConnection() utility
+│   └── index.ts            # Database module barrel export
+├── controllers/
+│   ├── health.controller.ts      # GET /api/v1/health
+│   └── health-db.controller.ts   # GET /api/v1/health/db
 ├── routes/
 │   ├── index.ts            # Root API router
-│   └── health.routes.ts    # /api/health
-├── controllers/
-│   └── health.controller.ts
-└── middlewares/
-    ├── requestLogger.ts    # Structured HTTP request logging
-    ├── errorHandler.ts     # Global error handler
-    └── notFound.ts         # 404 handler
+│   └── v1/
+│       ├── index.ts        # Version 1 router
+│       ├── health.routes.ts  # /health, /health/db routes
+│       └── test.routes.ts  # Dev-only test error routes
+├── middleware/
+│   ├── errorHandler.ts     # Global error handler
+│   ├── notFound.ts         # 404 handler
+│   ├── requestLogger.ts    # Pino HTTP request logging
+│   └── validate.ts         # Zod request validation middleware
+├── schemas/
+│   └── health.schema.ts    # Zod schemas for health endpoint
+├── services/
+│   └── health.service.ts   # Health status business logic
+└── utils/
+    ├── asyncHandler.ts     # Async route wrapper (catches promise rejections)
+    └── errors.ts           # Typed error classes (AppError, NotFoundError, …)
 ```
 
 **Key Decisions:**
@@ -77,6 +94,49 @@ src/
 - **Route → Controller separation** enables clean unit testing without mounting the full server.
 - **`tsx watch`** is used for zero-config TypeScript hot-reloading during development.
 - **`helmet`** applies security headers to all responses by default.
+- **Prisma singleton** with `globalThis` guard prevents connection pool exhaustion on hot-reload.
+
+## Database Architecture (`apps/api/prisma`)
+
+### ORM: Prisma with Prisma Postgres
+
+```
+prisma/
+├── schema.prisma           # Authoritative database schema
+└── migrations/
+    └── <timestamp>_init/   # Initial migration SQL (tracked by Git)
+        └── migration.sql
+```
+
+### Data Flow
+
+```
+Prisma schema (schema.prisma)
+        ↓  prisma migrate dev
+Migration files (prisma/migrations/)
+        ↓  applied to
+Prisma Postgres (cloud database)
+        ↓  prisma generate
+Generated Prisma Client (node_modules/@prisma/client)
+        ↓  imported by
+src/db/prisma.ts (singleton)
+        ↓  used by
+Express services / controllers
+```
+
+### Database Models (Phase 3)
+
+| Model         | Purpose                                         | Key Fields                                     |
+| ------------- | ----------------------------------------------- | ---------------------------------------------- |
+| `User`        | Core identity record                            | `id`, `email` (unique), `passwordHash`, timestamps |
+| `UserProfile` | Professional/biographical data (1:1 with User)  | `firstName`, `lastName`, `headline`, `location`, links |
+| `Resume`      | User resume versions (many per User)            | `title`, `originalFilename`, `contentText`, `parsedData` (JSON) |
+
+### Connection Lifecycle
+
+- `PrismaClient` is instantiated once at application start via the singleton in `src/db/prisma.ts`.
+- In development, the instance is cached on `globalThis` to survive `tsx watch` hot-reloads.
+- `prisma.$disconnect()` is called during graceful shutdown (SIGTERM / SIGINT).
 
 ## Shared Package (`packages/shared`)
 
@@ -91,18 +151,29 @@ Contains TypeScript type contracts shared between the frontend and the backend:
 
 ## Security Posture
 
-| Concern          | Approach                                                  |
-| ---------------- | --------------------------------------------------------- |
-| Secrets          | `.env` files, never committed. `.env.example` as template |
-| API Security     | `helmet` for HTTP headers, `cors` for origin whitelisting |
-| Type Safety      | Strict TypeScript across all packages                     |
-| Browser Exposure | `NEXT_PUBLIC_` prefix only for safe, public variables     |
+| Concern          | Approach                                                               |
+| ---------------- | ---------------------------------------------------------------------- |
+| Secrets          | `.env` files, never committed. `.env.example` as template              |
+| API Security     | `helmet` for HTTP headers, `cors` for origin whitelisting              |
+| Type Safety      | Strict TypeScript across all packages                                  |
+| Browser Exposure | `NEXT_PUBLIC_` prefix only for safe, public variables                  |
+| Passwords        | Stored as `passwordHash` (String?) — never plaintext. Hashing deferred |
+| DB Errors        | Internal errors logged via Pino; only generic messages returned in API |
+| DB Credentials   | Read from `DATABASE_URL` env var; never hardcoded                      |
+
+## API Health Endpoints
+
+| Endpoint             | Purpose                                             | DB Dependency |
+| -------------------- | --------------------------------------------------- | ------------- |
+| `GET /api/v1/health` | Liveness check — server is running                  | None          |
+| `GET /api/v1/health/db` | Readiness check — database connection verified   | Yes (SELECT 1) |
 
 ## Planned Future Phases
 
-| Phase   | Modules                                                                   |
-| ------- | ------------------------------------------------------------------------- |
-| Phase 2 | User authentication (NextAuth.js + JWT), PostgreSQL + Prisma              |
-| Phase 3 | Resume upload & parsing, AI job description analysis (OpenAI / Anthropic) |
-| Phase 4 | Cover letter generation, resume tailoring                                 |
-| Phase 5 | Application tracker dashboard, analytics                                  |
+| Phase   | Modules                                                                       |
+| ------- | ----------------------------------------------------------------------------- |
+| Phase 3 | ✅ Prisma + Prisma Postgres, User/UserProfile/Resume schema, DB health check   |
+| Phase 4 | User authentication (JWT), password hashing, auth middleware                  |
+| Phase 5 | Resume upload & parsing, AI job description analysis (OpenAI / Anthropic)    |
+| Phase 6 | Cover letter generation, resume tailoring                                     |
+| Phase 7 | Application tracker dashboard, analytics                                      |

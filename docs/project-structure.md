@@ -21,20 +21,44 @@ ai-job-application-copilot/         # Monorepo root
 │   │   └── package.json            # @copilot/web dependencies
 │   │
 │   └── api/                        # Express REST API (port 4000)
+│       ├── prisma/                 # Prisma ORM layer
+│       │   ├── schema.prisma       # Authoritative database schema
+│       │   └── migrations/         # Migration history (tracked by Git)
+│       │       └── <timestamp>_init/
+│       │           └── migration.sql
 │       ├── src/
-│       │   ├── index.ts            # Server bootstrap + graceful shutdown
+│       │   ├── server.ts           # Server bootstrap + graceful shutdown
 │       │   ├── app.ts              # Express factory (middleware + routes)
 │       │   ├── config/
-│       │   │   └── env.ts          # Typed environment configuration
+│       │   │   ├── env.ts          # Typed environment configuration
+│       │   │   └── logger.ts       # Pino structured logger
+│       │   ├── db/                 # Database layer
+│       │   │   ├── prisma.ts       # Singleton PrismaClient (hot-reload safe)
+│       │   │   ├── health.ts       # checkDatabaseConnection() utility
+│       │   │   └── index.ts        # DB module barrel export
 │       │   ├── controllers/
-│       │   │   └── health.controller.ts  # GET /api/health handler
-│       │   ├── middlewares/
-│       │   │   ├── requestLogger.ts      # HTTP request logging
-│       │   │   ├── errorHandler.ts       # Global error handler
-│       │   │   └── notFound.ts           # 404 handler
-│       │   └── routes/
-│       │       ├── index.ts              # Root API router
-│       │       └── health.routes.ts      # /api/health route definition
+│       │   │   ├── health.controller.ts      # GET /api/v1/health
+│       │   │   └── health-db.controller.ts   # GET /api/v1/health/db
+│       │   ├── middleware/
+│       │   │   ├── errorHandler.ts  # Global error handler
+│       │   │   ├── notFound.ts      # 404 handler
+│       │   │   ├── requestLogger.ts # HTTP request logging (Pino)
+│       │   │   ├── validate.ts      # Zod request validation middleware
+│       │   │   └── index.ts         # Middleware barrel export
+│       │   ├── routes/
+│       │   │   ├── index.ts         # Root API router
+│       │   │   ├── api.routes.ts    # /api prefix router
+│       │   │   └── v1/
+│       │   │       ├── index.ts     # /api/v1 router
+│       │   │       ├── health.routes.ts  # /health + /health/db
+│       │   │       └── test.routes.ts    # Dev-only error test routes
+│       │   ├── schemas/
+│       │   │   └── health.schema.ts # Zod schemas for health endpoint
+│       │   ├── services/
+│       │   │   └── health.service.ts  # Health status business logic
+│       │   └── utils/
+│       │       ├── asyncHandler.ts  # Async route handler wrapper
+│       │       └── errors.ts        # Typed error classes
 │       ├── tsconfig.json           # TypeScript config (NodeNext)
 │       ├── .env.example            # API env var template
 │       └── package.json            # @copilot/api dependencies
@@ -82,7 +106,22 @@ ai-job-application-copilot/         # Monorepo root
 
 - Exposes a typed REST API consumed by the frontend.
 - Uses `@copilot/shared` types for response contracts.
-- Future home for: authentication, resume processing, AI service integrations, database access.
+- Database access is isolated in `src/db/` — all Prisma usage goes through the shared singleton.
+- Future home for: authentication, resume processing, AI service integrations.
+
+### `apps/api/prisma` — Database Layer
+
+- `schema.prisma` is the single source of truth for the database structure.
+- Migration files in `prisma/migrations/` are tracked by Git and applied in order.
+- Never manually edit generated migration SQL unless absolutely necessary.
+
+### `apps/api/src/db` — Prisma Client Module
+
+| File          | Responsibility                                             |
+| ------------- | ---------------------------------------------------------- |
+| `prisma.ts`   | Singleton `PrismaClient` with development hot-reload guard |
+| `health.ts`   | `checkDatabaseConnection()` — safe connectivity check      |
+| `index.ts`    | Barrel export for the entire db module                     |
 
 ### `packages/shared` — Shared Types & Constants
 
@@ -102,12 +141,22 @@ ai-job-application-copilot/         # Monorepo root
 | Types/Interfaces    | `PascalCase`       | `HealthCheckResponse`         |
 | Constants           | `UPPER_SNAKE_CASE` | `HTTP_STATUS`                 |
 | npm packages        | `@copilot/<name>`  | `@copilot/shared`             |
+| DB table names      | `snake_case`       | `user_profiles`, `resumes`    |
+| Prisma model names  | `PascalCase`       | `User`, `UserProfile`         |
 
 ---
 
 ## Adding a New Feature
 
 1. **Define types** in `packages/shared/src/types/` and export from `index.ts`
-2. **Build the API endpoint**: add controller → route → mount in `apps/api/src/routes/index.ts`
-3. **Build the UI**: add Next.js page/component in `apps/web/src/app/`
-4. **Update `.env.example`** if new environment variables are required
+2. **Build the API endpoint**: add controller → route → mount in `apps/api/src/routes/v1/index.ts`
+3. **Use the shared Prisma client**: `import { prisma } from '../db/index.js'`
+4. **Build the UI**: add Next.js page/component in `apps/web/src/app/`
+5. **Update `.env.example`** if new environment variables are required
+
+## Adding a New Database Model
+
+1. Edit `apps/api/prisma/schema.prisma` to add the model
+2. Run `npm run db:migrate --workspace=@copilot/api` to create and apply the migration
+3. Run `npm run db:generate --workspace=@copilot/api` to regenerate Prisma Client
+4. Import `prisma` from `'../db/index.js'` in any service/controller that needs it
