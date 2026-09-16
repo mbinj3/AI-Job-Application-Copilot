@@ -10,7 +10,8 @@
 ai-job-application-copilot/
 ├── apps/
 │   ├── web/          # Next.js 15 frontend (App Router + Hero UI + Tailwind CSS)
-│   └── api/          # Express.js REST API (TypeScript)
+│   └── api/          # Express.js REST API (TypeScript + Prisma)
+│       └── prisma/   # Prisma schema + migration history
 ├── packages/
 │   └── shared/       # Shared TypeScript types, constants, and interfaces
 ├── docs/             # Project documentation
@@ -25,6 +26,7 @@ ai-job-application-copilot/
 
 - **Node.js** ≥ 20.0.0
 - **npm** ≥ 10.0.0
+- **Prisma Postgres** account at [console.prisma.io](https://console.prisma.io)
 
 ### 1. Clone and install
 
@@ -45,7 +47,19 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-### 3. Start development servers
+Open `apps/api/.env` and set your `DATABASE_URL` from [console.prisma.io](https://console.prisma.io).
+
+### 3. Set up the database
+
+```bash
+# Generate Prisma Client
+npm run db:generate --workspace=@copilot/api
+
+# Apply migrations to your Prisma Postgres database
+npm run db:migrate --workspace=@copilot/api
+```
+
+### 4. Start development servers
 
 ```bash
 # Start both frontend and backend concurrently
@@ -56,22 +70,30 @@ npm run dev:web    # Next.js frontend → http://localhost:3000
 npm run dev:api    # Express API     → http://localhost:4000
 ```
 
-### 4. Verify the setup
+### 5. Verify the setup
 
-| Check      | URL                              |
-| ---------- | -------------------------------- |
-| Frontend   | http://localhost:3000            |
-| API Health | http://localhost:4000/api/health |
+| Check        | URL                                    |
+| ------------ | -------------------------------------- |
+| Frontend     | http://localhost:3000                  |
+| API Health   | http://localhost:4000/api/v1/health    |
+| DB Readiness | http://localhost:4000/api/v1/health/db |
 
 ---
 
 ## 🛠️ Available Commands
+
+### Development
 
 | Command                | Description                                  |
 | ---------------------- | -------------------------------------------- |
 | `npm run dev`          | Start all apps in development mode           |
 | `npm run dev:web`      | Start only the Next.js frontend              |
 | `npm run dev:api`      | Start only the Express API                   |
+
+### Building & Quality
+
+| Command                | Description                                  |
+| ---------------------- | -------------------------------------------- |
 | `npm run build`        | Build all packages and apps                  |
 | `npm run build:shared` | Build shared package only                    |
 | `npm run lint`         | Run ESLint across the monorepo               |
@@ -79,6 +101,15 @@ npm run dev:api    # Express API     → http://localhost:4000
 | `npm run format:check` | Check formatting without writing             |
 | `npm run type-check`   | TypeScript type checking across all packages |
 | `npm run clean`        | Remove all build artifacts                   |
+
+### Database
+
+| Command                                                | Description                                  |
+| ------------------------------------------------------ | -------------------------------------------- |
+| `npm run db:generate --workspace=@copilot/api`         | Generate Prisma Client from schema           |
+| `npm run db:migrate --workspace=@copilot/api`          | Create and apply a new migration             |
+| `npm run db:studio --workspace=@copilot/api`           | Open Prisma Studio (visual DB browser)       |
+| `npm run db:push --workspace=@copilot/api`             | Push schema changes without migration file   |
 
 ---
 
@@ -97,6 +128,10 @@ npm run dev:api    # Express API     → http://localhost:4000
 - **Node.js 20+** — Runtime
 - **Express.js** — Web framework
 - **TypeScript** — Type safety
+- **Prisma ORM** — Type-safe database access
+- **Prisma Postgres** — Managed PostgreSQL database
+- **Pino** — Structured JSON logging
+- **Zod** — Request validation
 - **Helmet** — Security headers
 - **CORS** — Cross-origin configuration
 
@@ -105,6 +140,34 @@ npm run dev:api    # Express API     → http://localhost:4000
 - **Turborepo** — Build system and task pipeline
 - **npm Workspaces** — Package management
 - **ESLint + Prettier** — Code quality and formatting
+
+---
+
+## 🗄️ Database
+
+The application uses **Prisma Postgres** as its managed cloud database.
+
+### Database Workflow
+
+```
+Prisma schema (schema.prisma)
+        ↓  prisma migrate dev
+Migration files (prisma/migrations/)
+        ↓  applied to
+Prisma Postgres (cloud database)
+        ↓  prisma generate
+Generated Prisma Client
+        ↓  used by
+Express services / controllers
+```
+
+### Current Models (Phase 3)
+
+| Model         | Table            | Description                          |
+| ------------- | ---------------- | ------------------------------------ |
+| `User`        | `users`          | Core identity + auth credentials     |
+| `UserProfile` | `user_profiles`  | Professional/biographical data       |
+| `Resume`      | `resumes`        | Resume versions with parsed content  |
 
 ---
 
@@ -123,6 +186,14 @@ Detailed documentation lives in the [`docs/`](./docs/) directory:
 Never commit `.env` files containing real secrets. Always use `.env.example` as the template.
 
 See [`.env.example`](./.env.example) for all required variables with descriptions.
+
+Key variables:
+
+| Variable       | Location           | Purpose                              |
+| -------------- | ------------------ | ------------------------------------ |
+| `DATABASE_URL` | `apps/api/.env`    | Prisma Postgres connection string    |
+| `PORT`         | `apps/api/.env`    | API server port (default: 4000)      |
+| `NODE_ENV`     | `apps/api/.env`    | Environment mode                     |
 
 ---
 
