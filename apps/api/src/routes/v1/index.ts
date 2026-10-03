@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { env } from '../../config/env.js';
 import { healthRoutes } from './health.routes.js';
+import { authRoutes } from './auth.routes.js';
 import { testRoutes } from './test.routes.js';
 
 const v1Router = Router();
