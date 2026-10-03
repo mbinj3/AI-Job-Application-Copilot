@@ -124,11 +124,11 @@ src/db/prisma.ts (singleton)
 Express services / controllers
 ```
 
-### Database Models (Phase 3)
+### Database Models
 
 | Model         | Purpose                                         | Key Fields                                     |
 | ------------- | ----------------------------------------------- | ---------------------------------------------- |
-| `User`        | Core identity record                            | `id`, `email` (unique), `passwordHash`, timestamps |
+| `User`        | Core identity & authentication record           | `id`, `email` (unique), `passwordHash`, `isEmailVerified`, `emailVerifiedAt`, `lastLoginAt`, timestamps |
 | `UserProfile` | Professional/biographical data (1:1 with User)  | `firstName`, `lastName`, `headline`, `location`, links |
 | `Resume`      | User resume versions (many per User)            | `title`, `originalFilename`, `contentText`, `parsedData` (JSON) |
 
