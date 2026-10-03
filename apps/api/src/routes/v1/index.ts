@@ -9,8 +9,10 @@ const v1Router = Router();
 // Core health check: /api/v1/health
 v1Router.use('/health', healthRoutes);
 
+// Authentication: /api/v1/auth
+v1Router.use('/auth', authRoutes);
+
 // Future modular route mounts:
-// v1Router.use('/auth', authRoutes);
 // v1Router.use('/users', userRoutes);
 // v1Router.use('/jobs', jobRoutes);
 // v1Router.use('/applications', applicationRoutes);
