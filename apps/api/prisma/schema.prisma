@@ -21,12 +21,16 @@ datasource db {
 // =============================================================================
 // USER
 // Core identity record. Authentication credentials stored as a hash (never
-// plaintext). Authentication implementation is deferred to a later phase.
+// plaintext). Designed for email/password authentication, email verification,
+// and session/token management in Phase 4.
 // =============================================================================
 model User {
-  id           String  @id @default(cuid())
-  email        String  @unique
-  passwordHash String? // Future: populated during auth implementation phase
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String    // Secure password hash (never plaintext)
+  isEmailVerified Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  lastLoginAt     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
