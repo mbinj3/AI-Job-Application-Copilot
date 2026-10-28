@@ -1,173 +1,218 @@
-# AI Job Application Copilot
+# CareerPilot AI — AI Job Application Copilot
 
-> A production-grade, AI-powered assistant for crafting tailored job applications, analyzing job descriptions, and tracking your career journey.
+> An AI-powered assistant designed to help job seekers evaluate opportunities, understand how their resumes align with job requirements and prepare tailored application materials.
 
 ---
 
+## 🎯 The Problem
+
+Job seekers often spend significant time reviewing job descriptions, comparing requirements against their resumes, identifying skill gaps and customizing application materials for every role. This repetitive process can make job searching inefficient and difficult to manage consistently.
+
+## 💡 The Solution
+
+**CareerPilot AI** brings key job-application preparation tasks into one workflow. Users provide a job description and their resume, then receive an AI-assisted job analysis, resume-to-job match insights, missing-skill detection, resume improvement suggestions, a tailored cover letter and job-specific interview questions.
+
+The application is intended to support informed decisions and more targeted applications. AI-generated suggestions should be reviewed for accuracy before use.
+
+## 📌 Overview
+
+CareerPilot AI is a full-stack web application built around a simple workflow:
+
+1. A new user creates an account, verifies their email if verification is enabled, signs in and completes their profile.
+2. The user uploads a PDF/DOCX resume or pastes resume text.
+3. The application processes the resume and analyzes its skills, experience, education and keywords.
+4. The user pastes a job description.
+5. The AI analyzes the job requirements and extracts relevant skills, experience expectations, responsibilities and keywords.
+6. The matching workflow compares the resume with the job description and presents a match score with supporting insights.
+7. The application identifies potential skill gaps and provides resume improvement suggestions.
+8. The user generates a tailored cover letter and job-specific interview questions.
+9. The user reviews and saves or exports the results.
+
+Returning users can sign in and continue from the dashboard using their saved profile and resume.
+
+## ✨ Features
+
+- **Account and profile management** — Sign up, sign in and maintain professional details and job preferences.
+- **Resume input and processing** — Upload supported PDF/DOCX files or paste resume text for processing.
+- **AI resume analysis** — Extract skills, experience, education, technologies and relevant keywords.
+- **Job description analysis** — Identify the role, required skills, experience expectations, responsibilities and keywords.
+- **Resume-to-job matching** — Compare candidate information with job requirements and provide a match score with an explanation.
+- **Missing-skill detection** — Highlight requirements that may be absent or insufficiently demonstrated in the resume.
+- **Resume improvement suggestions** — Recommend relevant keywords, skills to emphasize and ways to improve resume content without inventing candidate experience.
+- **Tailored cover letters** — Generate a draft based on the job description and the candidate's provided background.
+- **Interview preparation** — Generate technical, behavioral and role-specific interview questions.
+- **Saved analysis workflow** — Keep relevant profile, resume, job and analysis data available to signed-in users as implemented.
+- **Validated AI output** — Use structured output and schema validation to make AI responses easier to validate and handle reliably.
+
+## 💻 Technology Stack
+
+### Frontend
+- **Next.js** — React framework and application routing.
+- **Hero UI** — React component library for accessible interface components.
+- **TypeScript** — Type-safe frontend development.
+
+### Backend
+- **Node.js** — JavaScript runtime.
+- **Express.js** — REST API framework.
+- **TypeScript** — Type-safe backend development.
+- **Zod** — Request and structured-data validation.
+- **Pino** — Structured application logging.
+
+### Database and Data Access
+- **PostgreSQL (Prisma Postgres)** — Relational database.
+- **Prisma ORM** — Database schema, migrations and type-safe data access.
+
+### AI and File Processing
+- **LLM API** — AI-assisted job analysis, resume analysis, matching insights, cover-letter drafting and interview-question generation.
+- **Structured AI output** — Consistent, schema-oriented responses.
+- **File processing** — Extract text from supported resume documents for analysis.
+
+### Testing and Deployment
+- **Vitest** — Automated unit and integration testing.
+- **Docker** — Containerized development and deployment.
+- **CI/CD with GitHub Actions** — Automated quality checks and deployment workflow.
+- **AWS** — Cloud deployment and supporting infrastructure.
+
 ## 🗂️ Project Structure
 
-```
-ai-job-application-copilot/
+The repository uses a monorepo layout to keep the frontend, API, shared code and documentation organized.
+
+```text
+careerpilot-ai/
 ├── apps/
-│   ├── web/          # Next.js 15 frontend (App Router + Hero UI + Tailwind CSS)
-│   └── api/          # Express.js REST API (TypeScript + Prisma)
-│       └── prisma/   # Prisma schema + migration history
+│   ├── web/                 # Next.js frontend (App Router, Hero UI, TypeScript)
+│   └── api/                 # Express REST API (TypeScript, Prisma)
+│       └── prisma/          # Prisma schema and migration history
 ├── packages/
-│   └── shared/       # Shared TypeScript types, constants, and interfaces
-├── docs/             # Project documentation
-├── .env.example      # Environment variable template
-├── turbo.json        # Turborepo pipeline configuration
-└── package.json      # Monorepo root (npm workspaces)
+│   └── shared/              # Shared TypeScript types, constants and interfaces
+├── docs/                    # Project documentation
+├── .env.example             # Root environment variable template
+├── turbo.json               # Turborepo pipeline configuration
+└── package.json             # Monorepo root and npm workspaces
 ```
 
 ## ⚡ Quick Start
 
 ### Prerequisites
 
-- **Node.js** ≥ 20.0.0
-- **npm** ≥ 10.0.0
-- **Prisma Postgres** account at [console.prisma.io](https://console.prisma.io)
+- **Node.js** 20 or later
+- **npm** 10 or later
+- A **Prisma Postgres** account: [console.prisma.io](https://console.prisma.io)
 
 ### 1. Clone and install
 
+Replace `<repository-url>` with the URL of your GitHub repository.
+
 ```bash
-git clone <repository-url> ai-job-application-copilot
-cd ai-job-application-copilot
+git clone <repository-url> careerpilot-ai
+cd careerpilot-ai
 npm install
 ```
 
 ### 2. Configure environment variables
 
 ```bash
-# Copy the root template
 cp .env.example .env.local
-
-# Copy app-level templates
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-Open `apps/api/.env` and set your `DATABASE_URL` from [console.prisma.io](https://console.prisma.io).
+Open the relevant environment files and configure the values required by your local setup, including the `DATABASE_URL` in `apps/api/.env`. Never commit real secrets.
 
-### 3. Set up the database
+### 3. Generate Prisma Client and run migrations
 
 ```bash
-# Generate Prisma Client
 npm run db:generate --workspace=@copilot/api
-
-# Apply migrations to your Prisma Postgres database
 npm run db:migrate --workspace=@copilot/api
 ```
 
-### 4. Start development servers
+### 4. Start the development servers
 
 ```bash
-# Start both frontend and backend concurrently
 npm run dev
-
-# Or start individually
-npm run dev:web    # Next.js frontend → http://localhost:3000
-npm run dev:api    # Express API     → http://localhost:4000
 ```
 
-### 5. Verify the setup
+Or start each application separately:
 
-| Check        | URL                                    |
-| ------------ | -------------------------------------- |
-| Frontend     | http://localhost:3000                  |
-| API Health   | http://localhost:4000/api/v1/health    |
-| DB Readiness | http://localhost:4000/api/v1/health/db |
+```bash
+npm run dev:web
+npm run dev:api
+```
 
----
+The documented local URLs are:
 
-## 🛠️ Available Commands
+| Service | URL |
+|---|---|
+| Next.js frontend | `http://localhost:3000` |
+| Express API health | `http://localhost:4000/api/v1/health` |
+| Database readiness | `http://localhost:4000/api/v1/health/db` |
+
+## 📋 Available Commands
 
 ### Development
 
-| Command                | Description                                  |
-| ---------------------- | -------------------------------------------- |
-| `npm run dev`          | Start all apps in development mode           |
-| `npm run dev:web`      | Start only the Next.js frontend              |
-| `npm run dev:api`      | Start only the Express API                   |
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the applications in development mode |
+| `npm run dev:web` | Start the Next.js frontend |
+| `npm run dev:api` | Start the Express API |
 
-### Building & Quality
+### Build and Code Quality
 
-| Command                | Description                                  |
-| ---------------------- | -------------------------------------------- |
-| `npm run build`        | Build all packages and apps                  |
-| `npm run build:shared` | Build shared package only                    |
-| `npm run lint`         | Run ESLint across the monorepo               |
-| `npm run format`       | Format all files with Prettier               |
-| `npm run format:check` | Check formatting without writing             |
-| `npm run type-check`   | TypeScript type checking across all packages |
-| `npm run clean`        | Remove all build artifacts                   |
+| Command | Description |
+|---|---|
+| `npm run build` | Build packages and applications |
+| `npm run build:shared` | Build the shared package |
+| `npm run lint` | Run ESLint |
+| `npm run format` | Format files with Prettier |
+| `npm run format:check` | Check formatting without changing files |
+| `npm run type-check` | Run TypeScript checks |
+| `npm run clean` | Remove build artifacts |
 
 ### Database
 
-| Command                                                | Description                                  |
-| ------------------------------------------------------ | -------------------------------------------- |
-| `npm run db:generate --workspace=@copilot/api`         | Generate Prisma Client from schema           |
-| `npm run db:migrate --workspace=@copilot/api`          | Create and apply a new migration             |
-| `npm run db:studio --workspace=@copilot/api`           | Open Prisma Studio (visual DB browser)       |
-| `npm run db:push --workspace=@copilot/api`             | Push schema changes without migration file   |
-
----
-
-## 🏗️ Technology Stack
-
-### Frontend (`apps/web`)
-
-- **Next.js 15** — App Router, Server Components, TypeScript
-- **Hero UI** — Accessible, beautiful component library
-- **Tailwind CSS** — Utility-first styling
-- **Framer Motion** — Animations
-- **Lucide React** — Icon library
-
-### Backend (`apps/api`)
-
-- **Node.js 20+** — Runtime
-- **Express.js** — Web framework
-- **TypeScript** — Type safety
-- **Prisma ORM** — Type-safe database access
-- **Prisma Postgres** — Managed PostgreSQL database
-- **Pino** — Structured JSON logging
-- **Zod** — Request validation
-- **Helmet** — Security headers
-- **CORS** — Cross-origin configuration
-
-### Monorepo Tooling
-
-- **Turborepo** — Build system and task pipeline
-- **npm Workspaces** — Package management
-- **ESLint + Prettier** — Code quality and formatting
-
----
+| Command | Description |
+|---|---|
+| `npm run db:generate --workspace=@copilot/api` | Generate Prisma Client |
+| `npm run db:migrate --workspace=@copilot/api` | Create and apply a database migration |
+| `npm run db:studio --workspace=@copilot/api` | Open Prisma Studio |
+| `npm run db:push --workspace=@copilot/api` | Push schema changes without creating a migration file |
 
 ## 🗄️ Database
 
-The application uses **Prisma Postgres** as its managed cloud database.
+The application is planned to use **Prisma Postgres** as its managed PostgreSQL database, accessed through Prisma ORM.
 
-### Database Workflow
+### Database workflow
 
-```
+```text
 Prisma schema (schema.prisma)
-        ↓  prisma migrate dev
-Migration files (prisma/migrations/)
-        ↓  applied to
-Prisma Postgres (cloud database)
-        ↓  prisma generate
+        ↓
+Prisma migration
+        ↓
+Prisma Postgres
+        ↓
 Generated Prisma Client
-        ↓  used by
-Express services / controllers
+        ↓
+Express services and controllers
 ```
 
-### Current Models (Phase 3)
 
-| Model         | Table            | Description                          |
-| ------------- | ---------------- | ------------------------------------ |
-| `User`        | `users`          | Core identity + auth credentials     |
-| `UserProfile` | `user_profiles`  | Professional/biographical data       |
-| `Resume`      | `resumes`        | Resume versions with parsed content  |
+| Model | Table | Purpose |
+|---|---|---|
+| `User` | `users` | User identity and authentication credentials |
+| `UserProfile` | `user_profiles` | Professional and biographical details |
+| `Resume` | `resumes` | Resume versions and parsed content |
+
+
+## 🔐 Environment Variables
+
+See [`.env.example`](./.env.example) for the root environment variable template.
+
+| Variable | Location | Purpose |
+|---|---|---|
+| `DATABASE_URL` | `apps/api/.env` | Prisma Postgres connection string |
+| `PORT` | `apps/api/.env` | API server port; documented default is `4000` |
+| `NODE_ENV` | `apps/api/.env` | Runtime environment mode |
 
 ---
 
@@ -178,22 +223,6 @@ Detailed documentation lives in the [`docs/`](./docs/) directory:
 - [`docs/architecture.md`](./docs/architecture.md) — System design and architectural decisions
 - [`docs/development-setup.md`](./docs/development-setup.md) — Full local development guide
 - [`docs/project-structure.md`](./docs/project-structure.md) — Directory structure reference
-
----
-
-## 🔒 Environment Variables
-
-Never commit `.env` files containing real secrets. Always use `.env.example` as the template.
-
-See [`.env.example`](./.env.example) for all required variables with descriptions.
-
-Key variables:
-
-| Variable       | Location           | Purpose                              |
-| -------------- | ------------------ | ------------------------------------ |
-| `DATABASE_URL` | `apps/api/.env`    | Prisma Postgres connection string    |
-| `PORT`         | `apps/api/.env`    | API server port (default: 4000)      |
-| `NODE_ENV`     | `apps/api/.env`    | Environment mode                     |
 
 ---
 
